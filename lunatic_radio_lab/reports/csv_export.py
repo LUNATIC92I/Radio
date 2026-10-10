@@ -13,7 +13,7 @@ EVENT_COLUMNS = [
     "id", "nature_donnees", "recepteur", "frequence_configuree_hz", "frequence_accordee_hz", "frequence_emission_hz",
     "canal", "debut", "fin", "debut_epoch", "duree_s", "puissance_crete_dbfs", "puissance_moyenne_dbfs", "snr_db",
     "largeur_bande_hz", "ecart_type_frequence_hz", "trames", "caracterisation", "confiance", "type",
-    "parametres_detection",
+    "superposition_suspectee", "parametres_detection",
 ]
 
 
@@ -24,7 +24,7 @@ def event_row(e: ActivityEvent) -> list:
         f"{e.start_ts:.3f}", f"{e.duration_s:.3f}", f"{e.peak_power_dbfs:.2f}", f"{e.mean_power_dbfs:.2f}",
         f"{e.snr_db:.1f}", "" if e.bandwidth_hz is None else f"{e.bandwidth_hz:.0f}", f"{e.freq_std_hz:.1f}", e.frames,
         e.classification or "", "" if e.classification_confidence is None else f"{e.classification_confidence:.2f}",
-        e.kind, json.dumps(e.detection_params, ensure_ascii=False),
+        e.kind, "oui" if e.overlap_suspected else "non", json.dumps(e.detection_params, ensure_ascii=False),
     ]
 
 

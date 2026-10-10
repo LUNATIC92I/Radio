@@ -20,7 +20,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.platypus import KeepTogether, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from ..models import ActivityEvent
-from .builder import ReportData, fmt_freq, fmt_ts
+from .builder import ReportData, fmt_classification, fmt_freq, fmt_ts
 
 GRAPHITE = colors.HexColor("#1B1E24")
 SILVER = colors.HexColor("#AEB4BE")
@@ -30,7 +30,7 @@ SIM_COLOR = colors.HexColor("#B04BD8")
 
 _FONT = "Helvetica"
 _FONT_BOLD = "Helvetica-Bold"
-_SANITIZE = {"≈": "~", "≤": "<=", "≥": ">=", "≠": "!=", "→": "->", "✓": "OK", "✗": "X", "…": "...", "²": "2"}
+_SANITIZE = {"≈": "~", "⚠": "/!\\", "≤": "<=", "≥": ">=", "≠": "!=", "→": "->", "✓": "OK", "✗": "X", "…": "...", "²": "2"}
 
 
 def _register_fonts() -> None:
@@ -191,10 +191,7 @@ def _events_table(events: list[ActivityEvent], st) -> Table:
     rows = [["#", "Début", "Durée (s)", "Fréq. émission", "Canal", "Crête dBFS", "Moy. dBFS", "SNR dB", "BW (Hz)",
              "Caractérisation (confiance)"]]
     for e in events[:400]:
-        cls = "—"
-        if e.classification:
-            cls = f"{e.classification} ({e.classification_confidence:.0%})" if e.classification_confidence is not None \
-                else e.classification
+        cls = fmt_classification(e)
         rows.append([e.id or "", fmt_ts(e.start_ts), f"{e.duration_s:.2f}", fmt_freq(e.emission_freq_hz),
                      e.channel_name or "—", f"{e.peak_power_dbfs:.1f}", f"{e.mean_power_dbfs:.1f}", f"{e.snr_db:.1f}",
                      "n/m" if e.bandwidth_hz is None else f"{e.bandwidth_hz:.0f}", cls])

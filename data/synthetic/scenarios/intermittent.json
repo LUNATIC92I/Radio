@@ -19,7 +19,8 @@
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
       "label": "Station A (simulée)",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     },
     {
       "kind": "fm_voice",
@@ -37,7 +38,8 @@
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
       "label": "Station B (simulée)",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     },
     {
       "kind": "fm_voice",
@@ -55,7 +57,8 @@
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
       "label": "Station C (simulée)",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     }
   ],
   "seed": 1234

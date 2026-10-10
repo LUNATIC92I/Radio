@@ -44,6 +44,8 @@ class ProtocolProfile:
     bands: tuple[BandAllocation, ...] = ()
     references: tuple[str, ...] = ()
     confidence_cap: float = 0.9
+    # plafond lorsque le motif de synchronisation public de la norme a été trouvé
+    confidence_cap_verified: float | None = None
     diagnostic_scope: str = "Mesures physiques uniquement (aucun décodage de contenu)."
     notes: tuple[str, ...] = ()
     ambiguous_with: tuple[str, ...] = field(default_factory=tuple)
@@ -112,10 +114,10 @@ for _p in (
         modulation="4fsk", access="TDMA", channel_spacing_hz=12_500.0, obw_range_hz=(3_000.0, 11_000.0),
         deviation_peak_range_hz=(1_400.0, 3_000.0), symbol_rate_hz=4_800.0, fsk_levels=4,
         burst_period_ms=60.0, burst_length_ms=27.5, bands=(_PMR446_EU,),
-        references=("ETSI TS 102 361-1 (couche physique 4FSK, ±648/±1944 Hz)",),
-        confidence_cap=0.6,
+        references=("ETSI TS 102 361-1 (couche physique 4FSK, ±648/±1944 Hz ; motifs de synchronisation § 9.1.1)",),
+        confidence_cap=0.6, confidence_cap_verified=0.9,
         notes=(
-            "Plafond de confiance 60 % : les motifs de synchronisation ETSI ne sont pas vérifiés.",
+            "Plafond de confiance 60 % sans motif de synchronisation ETSI, 90 % lorsqu'il est trouvé.",
             "Un relais DMR émet en continu : il ressemble alors à un signal 4FSK FDMA.",
         ),
         ambiguous_with=("p25_p1",),
@@ -133,11 +135,11 @@ for _p in (
         id="p25_p1", name="P25 Phase 1 (C4FM, FDMA)", family="P25",
         modulation="4fsk", access="FDMA", channel_spacing_hz=12_500.0, obw_range_hz=(3_000.0, 11_000.0),
         deviation_peak_range_hz=(1_400.0, 3_000.0), symbol_rate_hz=4_800.0, fsk_levels=4,
-        references=("TIA-102.BAAA-B (C4FM, ±600/±1800 Hz)",),
-        confidence_cap=0.5,
+        references=("TIA-102.BAAA-B (C4FM, ±600/±1800 Hz, synchronisation de trame)",),
+        confidence_cap=0.5, confidence_cap_verified=0.9,
         notes=(
-            "Plafond de confiance 50 % : sans vérification des trames, un signal 4FSK 4800 Bd continu "
-            "peut aussi être un relais DMR ou un autre système.",
+            "Plafond de confiance 50 % sans motif de synchronisation de trame (un signal 4FSK 4800 Bd continu "
+            "peut aussi être un relais DMR), 90 % lorsqu'il est trouvé.",
             "P25 Phase 2 (TDMA H-DQPSK/H-CPM) n'est pas caractérisé par cette version.",
         ),
         ambiguous_with=("dmr",),

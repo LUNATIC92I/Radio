@@ -141,6 +141,7 @@ class ActivityEvent:
     classification_confidence: float | None = None
     id: int | None = None
     kind: str = "émission détectée"
+    overlap_suspected: bool = False  # superposition d'émissions probable (collision)
 
     @property
     def duration_s(self) -> float:

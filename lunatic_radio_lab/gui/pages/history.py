@@ -8,7 +8,7 @@ from PySide6.QtCore import QDateTime
 from PySide6.QtWidgets import QComboBox, QDateTimeEdit, QFileDialog, QGridLayout, QGroupBox, QLabel, QMessageBox
 
 from ... import paths
-from ...reports.builder import fmt_freq, fmt_ts
+from ...reports.builder import fmt_classification, fmt_freq, fmt_ts
 from ...reports.csv_export import write_events_csv
 from ..widgets import Page, button, fill_table, guarded, make_table, mhz_spin, spin
 
@@ -98,7 +98,7 @@ class HistoryPage(Page):
              fmt_freq(e.configured_freq_hz), fmt_freq(e.emission_freq_hz), e.channel_name or "—",
              round(c.to_display_power(e.peak_power_dbfs), 1), round(c.to_display_power(e.mean_power_dbfs), 1),
              round(e.snr_db, 1), "n/m" if e.bandwidth_hz is None else round(e.bandwidth_hz),
-             round(e.freq_std_hz, 1), e.classification or "—",
+             round(e.freq_std_hz, 1), fmt_classification(e, with_confidence=False),
              "" if e.classification_confidence is None else f"{e.classification_confidence:.0%}", e.receiver_id)
             for e in self.events])
         n_sim = sum(e.simulated for e in self.events)

@@ -1,10 +1,10 @@
 ﻿section;cle;valeur
 rapport;titre;Exemple de rapport d'analyse — mode laboratoire
 resume;Logiciel;LUNATIC RADIO LAB 1.0.0
-resume;Généré le;2026-10-10 04:06:48
+resume;Généré le;2026-10-10 12:25:58
 resume;Opérateur;Technicien de démonstration
 resume;Juridiction déclarée;France (exemple)
-resume;Période analysée;2026-10-10 04:06:41 → 2026-10-10 04:07:00
+resume;Période analysée;2026-10-10 12:25:47 → 2026-10-10 12:26:08
 resume;Sessions de mesure;2
 resume;Événements — mesures réelles;0
 resume;Événements — données SIMULÉES;13
@@ -18,13 +18,13 @@ plage_analysee;session 1;"445975000–446225000 Hz ; gain 30.0 ; SIMULATION"
 parametres_mesure;session 1;"{""open_threshold_db"": 10.0, ""hysteresis_db"": 4.0, ""persistence_frames"": 2, ""min_duration_s"": 0.2, ""hang_time_s"": 0.4, ""freq_tolerance_hz"": 6250.0, ""min_bandwidth_hz"": 0.0, ""max_bandwidth_hz"": null, ""dc_exclude_hz"": 0.0, ""merge_gap_hz"": 2000.0, ""channels_only"": false, ""channels"": [""PMR446 CH01"", ""PMR446 CH02"", ""PMR446 CH03"", ""PMR446 CH04"", ""PMR446 CH05"", ""PMR446 CH06"", ""PMR446 CH07"", ""PMR446 CH08"", ""PMR446 CH09"", ""PMR446 CH10"", ""PMR446 CH11"", ""PMR446 CH12"", ""PMR446 CH13"", ""PMR446 CH14"", ""PMR446 CH15"", ""PMR446 CH16""], ""close_threshold_db"": 6.0}"
 plage_analysee;session 2;"445975000–446225000 Hz ; gain 30.0 ; SIMULATION"
 parametres_mesure;session 2;"{""open_threshold_db"": 10.0, ""hysteresis_db"": 4.0, ""persistence_frames"": 2, ""min_duration_s"": 0.2, ""hang_time_s"": 0.4, ""freq_tolerance_hz"": 6250.0, ""min_bandwidth_hz"": 0.0, ""max_bandwidth_hz"": null, ""dc_exclude_hz"": 0.0, ""merge_gap_hz"": 2000.0, ""channels_only"": false, ""channels"": [""PMR446 CH01"", ""PMR446 CH02"", ""PMR446 CH03"", ""PMR446 CH04"", ""PMR446 CH05"", ""PMR446 CH06"", ""PMR446 CH07"", ""PMR446 CH08"", ""PMR446 CH09"", ""PMR446 CH10"", ""PMR446 CH11"", ""PMR446 CH12"", ""PMR446 CH13"", ""PMR446 CH14"", ""PMR446 CH15"", ""PMR446 CH16""], ""close_threshold_db"": 6.0}"
-test;Exactitude fréquence (porteuse simulée);"RÉUSSI ; 2026-10-10 04:06:42 ; SIMULATION ; {""erreur_hz"": -0.00364530086517334, ""tolerance_hz"": 122.0703125, ""rbw_hz"": 122.3359947642241}"
-test;Exactitude puissance de canal (porteuse simulée);"RÉUSSI ; 2026-10-10 04:06:42 ; SIMULATION ; {""erreur_db"": 0.002245846697462639, ""tolerance_db"": 1.0}"
-test;Absence de saturation au gain nominal;"RÉUSSI ; 2026-10-10 04:06:42 ; SIMULATION ; {""taux_saturation"": 0.0}"
-test;Détection de saturation (signal fort, gain max);"RÉUSSI ; 2026-10-10 04:06:42 ; SIMULATION ; {""taux_saturation"": 1.0}"
-test;Caractérisation « carrier »;"RÉUSSI ; 2026-10-10 04:06:43 ; SIMULATION ; {""attendu"": ""test_cw"", ""obtenu"": ""test_cw"", ""confiance"": 0.9}"
-test;Caractérisation « fm_tone »;"RÉUSSI ; 2026-10-10 04:06:43 ; SIMULATION ; {""attendu"": ""test_fm_1k"", ""obtenu"": ""test_fm_1k"", ""confiance"": 0.85}"
-test;Aucune fausse détection sur bruit seul;"RÉUSSI ; 2026-10-10 04:06:43 ; SIMULATION ; {""detections"": 0}"
+test;Exactitude fréquence (porteuse simulée);"RÉUSSI ; 2026-10-10 12:25:48 ; SIMULATION ; {""erreur_hz"": -0.00364530086517334, ""tolerance_hz"": 122.0703125, ""rbw_hz"": 122.3359947642241}"
+test;Exactitude puissance de canal (porteuse simulée);"RÉUSSI ; 2026-10-10 12:25:48 ; SIMULATION ; {""erreur_db"": 0.002245846697462639, ""tolerance_db"": 1.0}"
+test;Absence de saturation au gain nominal;"RÉUSSI ; 2026-10-10 12:25:48 ; SIMULATION ; {""taux_saturation"": 0.0}"
+test;Détection de saturation (signal fort, gain max);"RÉUSSI ; 2026-10-10 12:25:48 ; SIMULATION ; {""taux_saturation"": 1.0}"
+test;Caractérisation « carrier »;"RÉUSSI ; 2026-10-10 12:25:48 ; SIMULATION ; {""attendu"": ""test_cw"", ""obtenu"": ""test_cw"", ""confiance"": 0.9}"
+test;Caractérisation « fm_tone »;"RÉUSSI ; 2026-10-10 12:25:49 ; SIMULATION ; {""attendu"": ""test_fm_1k"", ""obtenu"": ""test_fm_1k"", ""confiance"": 0.85}"
+test;Aucune fausse détection sur bruit seul;"RÉUSSI ; 2026-10-10 12:25:49 ; SIMULATION ; {""detections"": 0}"
 limite_technique;1;Les puissances sont exprimées en dBFS (relatif à la pleine échelle de l'ADC) : elles dépendent du gain, de l'antenne et du câblage, et ne sont pas des puissances absolues (dBm) sans étalonnage.
 limite_technique;2;"La puissance par case FFT dépend de la résolution (RBW) ; la puissance de canal est intégrée et corrigée de la largeur de bande équivalente de bruit de la fenêtre."
 limite_technique;3;Le plancher de bruit est estimé par la médiane du spectre (biais possible d'environ -1,6 dB avec peu de moyennage).

@@ -17,8 +17,10 @@ def cls(em, noise=-60.0, seconds=1.0):
     (Emitter("carrier", FC + OFF, -40), "test_cw"),
     (Emitter("fm_tone", FC + OFF, -40), "test_fm_1k"),
     (Emitter("fm_voice", FC + OFF, -40, ctcss_hz=123.0), "fm_nb"),
-    (Emitter("fsk4_tdma", FC + OFF, -40, deviation_hz=1944), "dmr"),
+    (Emitter("fsk4_tdma", FC + OFF, -40, deviation_hz=1944, embed_sync=True), "dmr"),
+    (Emitter("fsk4_tdma", FC + OFF, -40, deviation_hz=1944), "fsk4_4800"),
     (Emitter("fsk4_cont", FC + OFF, -40, deviation_hz=1800), "fsk4_4800"),
+    (Emitter("fsk4_cont", FC + OFF, -40, deviation_hz=1800, embed_sync=True), "p25_p1"),
     (Emitter("fsk4_narrow", FC + OFF, -40, deviation_hz=1050, symbol_rate=2400), "fsk4_6k25"),
 ])
 def test_expected_hypothesis(em, expected):
@@ -26,13 +28,19 @@ def test_expected_hypothesis(em, expected):
     assert c.best.profile_id == expected
     assert c.best.confidence >= DECISION_THRESHOLD
     assert c.best.supporting  # toujours justifié
-    assert c.best.confidence <= PROFILES[expected].confidence_cap + 1e-9
+    prof = PROFILES[expected]
+    assert c.best.confidence <= max(prof.confidence_cap, prof.confidence_cap_verified or 0) + 1e-9
 
 
 def test_digital_never_certain():
     c = cls(Emitter("fsk4_tdma", FC + OFF, -30, deviation_hz=1944))
     assert all(h.confidence <= 0.6 + 1e-9 for h in c.hypotheses if h.profile_id in ("dmr", "p25_p1", "fsk4_4800"))
-    assert "Compatible avec" in c.verdict
+    assert "non déterminé" in c.verdict
+    # même avec le motif de synchronisation, la confiance reste < 100 %
+    c2 = cls(Emitter("fsk4_tdma", FC + OFF, -30, deviation_hz=1944, embed_sync=True))
+    assert c2.best.confidence <= 0.9 + 1e-9
+    assert any("synchronisation" in s for s in c2.best.supporting)
+    assert any("Motifs de synchronisation" in o for o in c2.observations)
 
 
 @pytest.mark.parametrize("em", [Emitter("fm_voice", FC + OFF, -78), Emitter("noise_burst", FC + OFF, -40)])
@@ -66,3 +74,16 @@ def test_frequency_drift_measured():
 def test_too_short_capture():
     f = extract_features(gen([Emitter("carrier", FC + OFF, -40)], 0.01), 250e3, OFF)
     assert f.warnings and f.snr_db is None
+
+
+def test_collision_flagged():
+    from lunatic_radio_lab.dsp.synth import Scenario, SignalGenerator
+    sc = Scenario(emitters=[Emitter("fm_voice", FC + OFF, -40.0, on_s=3.0, off_s=3.0),
+                            Emitter("fm_tone", FC + OFF + 300, -43.0, tone_hz=1750, on_s=1.0, off_s=5.0, phase_s=1.5)])
+    x = SignalGenerator(sc, 250e3).generate(int(3.0 * 250e3), FC)
+    f = extract_features(x[int(0.5 * 250e3):], 250e3, OFF)
+    assert f.overlap_suspected
+    clean = extract_features(gen([Emitter("fm_voice", FC + OFF, -40)], 2.0), 250e3, OFF)
+    assert not clean.overlap_suspected
+    tdma = extract_features(gen([Emitter("fsk4_tdma", FC + OFF, -40, deviation_hz=1944)], 1.0), 250e3, OFF)
+    assert not tdma.overlap_suspected  # les fronts de rafales ne sont pas des collisions

@@ -41,7 +41,9 @@ de canal), SNR, largeur estimée, récepteur, paramètres de détection et carac
 **Identification signaux** — choisissez une émission détectée (ou un fichier SigMF) puis « Analyser ». Le verdict
 est « Compatible avec … (confiance N %) » ou « Non identifié ». Le tableau classe toutes les hypothèses ; la
 sélection d'une hypothèse liste les éléments favorables (✔), contraires (✘), non mesurés (?) et les notes.
-Les profils numériques sont plafonnés (DMR 60 %, P25 50 %, 4FSK 6,25 kHz 50 %) car aucune trame n'est vérifiée.
+Les profils numériques sont plafonnés (DMR 60 %, P25 50 %, 4FSK 6,25 kHz 50 %) ; si le motif de
+synchronisation public de la norme est trouvé, le plafond passe à 90 %. Aucun contenu n'est décodé.
+La mention « superposition suspectée » signale une collision probable (deux émissions sur le même canal).
 
 **Analyse audio** — ouvrir un fichier (copie sécurisée + empreinte SHA-256), clip de test, ou démoduler une
 émission FM (direct : canal autorisé à l'enregistrement + attestation ; fichier SigMF réel : attestation).

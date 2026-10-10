@@ -111,3 +111,24 @@ def test_database_file(tmp_path):
     d.set_setting("a", 1)
     d.close()
     assert Database(tmp_path / "x.sqlite3").get_setting("a") == 1
+
+
+def test_database_migration_adds_overlap_column(tmp_path):
+    import sqlite3
+    from lunatic_radio_lab.storage.database import Database
+    p = tmp_path / "old.sqlite3"
+    con = sqlite3.connect(p)
+    con.execute("CREATE TABLE events (id INTEGER PRIMARY KEY, receiver_id TEXT, tuned_freq_hz REAL, "
+                "emission_freq_hz REAL, channel_name TEXT, channel_freq_hz REAL, start_ts REAL, end_ts REAL, "
+                "duration_s REAL, peak_power_dbfs REAL, mean_power_dbfs REAL, snr_db REAL, bandwidth_hz REAL, "
+                "freq_std_hz REAL, frames INTEGER, detection_json TEXT, simulated INTEGER, classification TEXT, "
+                "classification_confidence REAL, kind TEXT, session_id INTEGER)")
+    con.execute("INSERT INTO events VALUES (1,'r',1,1,NULL,NULL,0,1,1,0,0,0,NULL,0,1,'{}',1,NULL,NULL,'k',NULL)")
+    con.commit()
+    con.close()
+    d = Database(p)
+    ev = d.query_events()[0]
+    assert ev.overlap_suspected is False
+    ev.overlap_suspected = True
+    d.add_event(ev)
+    assert any(e.overlap_suspected for e in d.query_events())

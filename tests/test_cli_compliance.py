@@ -38,8 +38,10 @@ def test_shipped_synthetic_captures_are_marked_and_classified():
     from lunatic_radio_lab.dsp.classifier import classify_iq
     from lunatic_radio_lab.iq_io import read_sigmf
     data = PKG.parent / "data" / "synthetic"
-    expected = {"fm_test_1khz_ctcss88": "test_fm_1k", "fm_voix_synthetique": "fm_nb", "fsk4_tdma_type_dmr": "dmr"}
-    offsets = {"fm_test_1khz_ctcss88": 25_000, "fm_voix_synthetique": -40_000, "fsk4_tdma_type_dmr": 6_875}
+    expected = {"fm_test_1khz_ctcss88": "test_fm_1k", "fm_voix_synthetique": "fm_nb", "fsk4_tdma_type_dmr": "dmr",
+                "fsk4_continu_type_p25": "p25_p1"}
+    offsets = {"fm_test_1khz_ctcss88": 25_000, "fm_voix_synthetique": -40_000, "fsk4_tdma_type_dmr": 6_875,
+               "fsk4_continu_type_p25": -18_750}
     for name, pid in expected.items():
         p = data / f"{name}.sigmf-meta"
         if not p.exists():

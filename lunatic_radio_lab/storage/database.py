@@ -65,7 +65,8 @@ CREATE TABLE IF NOT EXISTS events (
     simulated INTEGER NOT NULL,
     classification TEXT,
     classification_confidence REAL,
-    kind TEXT NOT NULL
+    kind TEXT NOT NULL,
+    overlap_suspected INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_events_start ON events(start_ts);
 CREATE TABLE IF NOT EXISTS test_results (
@@ -106,8 +107,15 @@ class Database:
             if self.path != ":memory:":
                 self.conn.execute("PRAGMA journal_mode = WAL")
             self.conn.executescript(SCHEMA)
+            self._migrate()
             self.conn.execute("INSERT OR IGNORE INTO meta(key, value) VALUES('schema_version', ?)", (str(SCHEMA_VERSION),))
             self.conn.commit()
+
+    def _migrate(self) -> None:
+        """Mise à niveau des bases créées par une version antérieure."""
+        cols = {r[1] for r in self.conn.execute("PRAGMA table_info(events)")}
+        if "overlap_suspected" not in cols:
+            self.conn.execute("ALTER TABLE events ADD COLUMN overlap_suspected INTEGER NOT NULL DEFAULT 0")
 
     def close(self) -> None:
         with self._lock:
@@ -206,12 +214,12 @@ class Database:
         cur = self._exec(
             "INSERT INTO events(session_id, receiver_id, tuned_freq_hz, emission_freq_hz, channel_name, channel_freq_hz,"
             " start_ts, end_ts, duration_s, peak_power_dbfs, mean_power_dbfs, snr_db, bandwidth_hz, freq_std_hz, frames,"
-            " detection_json, simulated, classification, classification_confidence, kind)"
-            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " detection_json, simulated, classification, classification_confidence, kind, overlap_suspected)"
+            " VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (session_id, ev.receiver_id, ev.tuned_freq_hz, ev.emission_freq_hz, ev.channel_name, ev.channel_freq_hz,
              ev.start_ts, ev.end_ts, ev.duration_s, ev.peak_power_dbfs, ev.mean_power_dbfs, ev.snr_db, ev.bandwidth_hz,
              ev.freq_std_hz, ev.frames, json.dumps(ev.detection_params), int(ev.simulated), ev.classification,
-             ev.classification_confidence, ev.kind),
+             ev.classification_confidence, ev.kind, int(ev.overlap_suspected)),
         )
         ev.id = int(cur.lastrowid)
         return ev.id
@@ -258,6 +266,7 @@ class Database:
             simulated=bool(r["simulated"]), channel_name=r["channel_name"], channel_freq_hz=r["channel_freq_hz"],
             frames=r["frames"], classification=r["classification"],
             classification_confidence=r["classification_confidence"], id=r["id"], kind=r["kind"],
+            overlap_suspected=bool(r["overlap_suspected"]),
         )
 
     def purge_events(self, before_ts: float | None = None) -> int:

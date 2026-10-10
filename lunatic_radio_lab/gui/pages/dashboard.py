@@ -7,7 +7,7 @@ import time
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QGridLayout, QGroupBox, QHBoxLayout, QLabel, QVBoxLayout
 
-from ...reports.builder import fmt_freq, fmt_ts
+from ...reports.builder import fmt_classification, fmt_freq, fmt_ts
 from ...selftest import run_selftests
 from ..plots import SpectrumPlot
 from ..widgets import Card, Page, button, fill_table, make_table
@@ -100,7 +100,7 @@ class DashboardPage(Page):
         fill_table(self.ev_table, [
             (fmt_ts(e.start_ts), f"{e.duration_s:.2f} s", fmt_freq(e.emission_freq_hz), e.channel_name or "—",
              f"{self.ctx.to_display_power(e.mean_power_dbfs):.1f} {self.ctx.power_unit}",
-             f"{e.classification} ({e.classification_confidence:.0%})" if e.classification and e.classification_confidence is not None else "—",
+             fmt_classification(e),
              "SIMULÉ" if e.simulated else "RÉEL") for e in evs])
 
     def _frame(self, fr, dets) -> None:

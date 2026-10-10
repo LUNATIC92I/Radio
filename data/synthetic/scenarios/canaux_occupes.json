@@ -19,7 +19,8 @@
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
       "label": "FM permanente",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     },
     {
       "kind": "fsk4_tdma",
@@ -36,8 +37,9 @@
       "fading_depth_db": 0.0,
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
-      "label": "4FSK TDMA synthétique",
-      "enabled": true
+      "label": "4FSK TDMA synthétique avec motif de synchro DMR",
+      "enabled": true,
+      "embed_sync": true
     },
     {
       "kind": "fsk4_cont",
@@ -54,8 +56,9 @@
       "fading_depth_db": 0.0,
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
-      "label": "4FSK continu synthétique",
-      "enabled": true
+      "label": "4FSK continu synthétique sans motif de synchro",
+      "enabled": true,
+      "embed_sync": false
     },
     {
       "kind": "carrier",
@@ -73,7 +76,8 @@
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
       "label": "Porteuse",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     }
   ],
   "seed": 1234

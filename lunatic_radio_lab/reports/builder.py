@@ -180,3 +180,13 @@ def build_report(
         spectrum=SpectrumSnapshot.from_frame(spectrum, max_hold=spectrum_is_max_hold) if spectrum is not None else None,
         calibration_offset_db=calib,
     )
+
+
+def fmt_classification(e: ActivityEvent, with_confidence: bool = True) -> str:
+    """Caractérisation affichable d'un événement (avec confiance et alerte de superposition)."""
+    txt = e.classification or "—"
+    if with_confidence and e.classification and e.classification_confidence is not None:
+        txt = f"{e.classification} ({e.classification_confidence:.0%})"
+    if e.overlap_suspected:
+        txt += " ⚠ superposition suspectée"
+    return txt

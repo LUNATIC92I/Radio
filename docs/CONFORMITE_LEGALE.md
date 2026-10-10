@@ -20,7 +20,7 @@
 | Exigence | Mesure technique |
 |---|---|
 | Pas d'émission | Aucune fonction d'émission ; flux SoapySDR/GNU Radio en réception uniquement ; test automatisé qui interdit ces motifs dans le code |
-| Pas de déchiffrement | Aucun décodeur de voix numérique ni de trame ; caractérisation physique seulement |
+| Pas de déchiffrement | Aucun décodeur de voix numérique ni de trame ; caractérisation physique et repérage des motifs de synchronisation publics (séquences fixes sans information) seulement |
 | Enregistrement encadré | Démodulation/capture IQ réelles limitées aux canaux marqués « enregistrement autorisé » avec référence d'autorisation, attestation de l'opérateur et audit |
 | Traçabilité | Journal d'audit horodaté (accès, configuration, imports, exports, captures, refus) |
 | Local par défaut | Aucun appel réseau ; récepteurs réseau désactivés par défaut (activation protégée) |

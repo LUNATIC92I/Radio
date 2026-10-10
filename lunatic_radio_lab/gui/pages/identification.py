@@ -66,7 +66,7 @@ class IdentificationPage(Page):
         lv.addWidget(self.verdict)
         lv.addWidget(self.nature)
         note = QLabel(f"Seuil de décision : {DECISION_THRESHOLD:.0%}. En dessous, le signal est « non identifié ». "
-                      "Les profils numériques sont plafonnés car aucune trame n'est vérifiée.")
+                      "Profils numériques plafonnés (90 % au plus, et seulement si le motif de synchronisation public est trouvé).")
         note.setObjectName("hint")
         note.setWordWrap(True)
         lv.addWidget(note)

@@ -27,7 +27,10 @@ def main() -> None:
     captures = {
         "fm_test_1khz_ctcss88": [Emitter("fm_tone", FC + 25_000, -35, ctcss_hz=88.5, label="FM test")],
         "fm_voix_synthetique": [Emitter("fm_voice", FC - 40_000, -38, ctcss_hz=123.0, label="FM voix")],
-        "fsk4_tdma_type_dmr": [Emitter("fsk4_tdma", FC + 6_875, -38, deviation_hz=1944, label="4FSK TDMA")],
+        "fsk4_tdma_type_dmr": [Emitter("fsk4_tdma", FC + 6_875, -38, deviation_hz=1944, embed_sync=True,
+                                       label="4FSK TDMA + motif de synchro DMR")],
+        "fsk4_continu_type_p25": [Emitter("fsk4_cont", FC - 18_750, -38, deviation_hz=1800, embed_sync=True,
+                                          label="4FSK continu + motif de synchro P25")],
     }
     for name, em in captures.items():
         g = SignalGenerator(Scenario(name, emitters=em, noise_dbfs=-60, seed=11), FS)

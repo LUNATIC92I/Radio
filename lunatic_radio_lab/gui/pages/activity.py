@@ -9,7 +9,7 @@ from PySide6.QtWidgets import (
 )
 
 from ...dsp.activity import ActivityParams
-from ...reports.builder import fmt_freq, fmt_ts
+from ...reports.builder import fmt_classification, fmt_freq, fmt_ts
 from ..widgets import Page, button, fill_table, make_table, spin
 
 
@@ -126,5 +126,5 @@ class ActivityPage(Page):
              fmt_freq(e.emission_freq_hz), e.channel_name or "—", f"{c.to_display_power(e.peak_power_dbfs):.1f}",
              f"{c.to_display_power(e.mean_power_dbfs):.1f}", f"{e.snr_db:.1f} dB",
              "n/m" if e.bandwidth_hz is None else f"{e.bandwidth_hz:.0f} Hz", e.receiver_id,
-             f"{e.classification} ({e.classification_confidence:.0%})" if e.classification and e.classification_confidence is not None else "—",
+             fmt_classification(e),
              "SIMULÉ" if e.simulated else "RÉEL") for e in evs])

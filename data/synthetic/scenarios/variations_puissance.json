@@ -19,7 +19,8 @@
       "fading_rate_hz": 0.1,
       "drift_hz_per_s": 15.0,
       "label": "Émetteur à évanouissement",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     }
   ],
   "seed": 1234

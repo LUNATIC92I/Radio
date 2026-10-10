@@ -19,7 +19,8 @@
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
       "label": "Station 1 (simulée)",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     },
     {
       "kind": "fm_tone",
@@ -37,7 +38,8 @@
       "fading_rate_hz": 0.2,
       "drift_hz_per_s": 0.0,
       "label": "Station 2 (simulée, chevauchement)",
-      "enabled": true
+      "enabled": true,
+      "embed_sync": false
     }
   ],
   "seed": 1234

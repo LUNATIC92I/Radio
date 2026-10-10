@@ -253,6 +253,7 @@ class AcquisitionEngine:
         except Exception as exc:  # noqa: BLE001
             log.info("Classification impossible : %s", exc)
             return
+        ev.overlap_suspected = c.features.overlap_suspected
         b = c.best
         if b is not None:
             ev.classification = b.name if b.confidence >= 0.5 else "Non identifié"

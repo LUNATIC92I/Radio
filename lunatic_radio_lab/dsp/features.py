@@ -13,6 +13,7 @@ from scipy import signal as sps
 
 from .demod import channelize, instantaneous_frequency, resample
 from .detection import occupied_bandwidth
+from .sync import search_sync, symbol_center_samples
 from .spectrum import estimate_noise_floor_db, freq_axis, from_db, to_db, welch_psd
 
 # Tonalités CTCSS normalisées (EIA/TIA-603), en Hz
@@ -50,6 +51,11 @@ class SignalFeatures:
     tone_hz: float | None = None
     tone_purity: float | None = None
     voice_band_ratio: float | None = None
+    overlap_fraction: float | None = None  # part des fenêtres de 20 ms à enveloppe perturbée
+    overlap_suspected: bool = False
+    sync_symbols: int = 0
+    sync_matches: dict[str, int] = field(default_factory=dict)
+    sync_profile_hits: dict[str, int] = field(default_factory=dict)
     warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -200,6 +206,21 @@ def extract_features(
             if e - s > 2 * g + 4:
                 m_stat[s + g : e - g] = True
     m_inst = m_stat[1:]
+
+    # --- superposition d'émissions : enveloppe localement perturbée alors qu'elle est
+    # constante ailleurs (une modulation angulaire seule a une enveloppe constante)
+    on_c = env[m_stat]
+    w20 = int(0.020 * fs)
+    nw = len(on_c) // w20 if w20 else 0
+    if nw >= 5 and feats.snr_db is not None:
+        blk = on_c[: nw * w20].reshape(nw, w20)
+        cv = blk.std(axis=1) / np.maximum(blk.mean(axis=1), 1e-12)
+        feats.overlap_fraction = float(np.mean(cv > 0.25))
+        if feats.snr_db >= 15.0 and feats.overlap_fraction >= 0.1 and float(np.min(cv)) < 0.12:
+            feats.overlap_suspected = True
+            feats.warnings.append(
+                f"Enveloppe perturbée sur {feats.overlap_fraction:.0%} de la capture alors qu'elle est constante "
+                "ailleurs : superposition probable de plusieurs émissions (collision) ou trajets multiples.")
     lp = sps.butter(4, min(3_000.0, 0.45 * fs), fs=fs, output="sos")
     inst_lp = sps.sosfiltfilt(lp, inst) if len(inst) > 30 else inst
     vals = inst_lp[m_inst]
@@ -225,6 +246,28 @@ def extract_features(
     rate, strength = _symbol_rate(inst_sr, seg_inst, fs)
     feats.symbol_rate_hz = float(rate) if rate is not None else None
     feats.symbol_rate_strength_db = float(strength) if strength is not None else None
+
+    # Niveaux comptés au centre des symboles quand une raie de débit symbole existe
+    # (plus robuste que l'histogramme brut, faussé par les suites de symboles identiques).
+    if rate is not None and (strength or 0) >= 12.0 and len(vals) > 100:
+        g = int(0.0015 * fs)
+        centers = [symbol_center_samples(inst_lp[s + g : min(e, len(inst_lp)) - g], fs, rate)
+                   for s, e in seg_inst if e - s > 2 * g + 50]
+        centers = [c for c in centers if len(c)]
+        if centers:
+            lv = _count_levels(np.concatenate(centers))
+            if lv is not None:
+                feats.fsk_levels = lv
+
+    # --- motifs de synchronisation publics (4FSK 4800 Bd uniquement ; aucun décodage)
+    if (feats.fsk_levels == 4 and rate is not None and (strength or 0) >= 12.0
+            and abs(rate - 4_800.0) / 4_800.0 < 0.02):
+        g = int(0.0015 * fs)
+        sync_segs = [(s + g, min(e, len(inst_lp)) - g) for s, e in seg_inst if e - s > 2 * g + 50]
+        sr = search_sync(inst_lp, sync_segs, fs, rate)
+        feats.sync_symbols = sr.symbols_examined
+        feats.sync_matches = sr.matches
+        feats.sync_profile_hits = sr.profile_hits
 
     # --- analyse audio (après démodulation FM)
     if len(vals) > 100:

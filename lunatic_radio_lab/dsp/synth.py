@@ -49,6 +49,7 @@ class Emitter:
     drift_hz_per_s: float = 0.0
     label: str = ""
     enabled: bool = True
+    embed_sync: bool = False  # 4FSK : insère le motif de synchronisation public (DMR ou P25)
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
@@ -115,6 +116,27 @@ class _EmitterState:
 
 # Niveaux 4FSK normalisés (±1/3, ±1) × excursion max
 _FSK_LEVELS = np.array([-3.0, -1.0, 1.0, 3.0]) / 3.0
+
+
+def _insert_sync(sym: np.ndarray, abs_idx: np.ndarray, kind: str, rate: float) -> np.ndarray:
+    """Remplace des symboles aléatoires par un motif de synchronisation public.
+
+    TDMA (type DMR) : rafale de 132 symboles toutes les 288 (60 ms à 4800 Bd), motif
+    « MS voix » au centre (symboles 54 à 77). Continu (type P25) : motif de trame tous
+    les 864 symboles. Le reste de la trame demeure aléatoire (aucun contenu réel).
+    """
+    from .sync import PATTERNS
+
+    if kind == "fsk4_tdma":
+        period, start, pat = int(round(0.060 * rate)), 54, PATTERNS["DMR MS voix"][0]
+    elif kind == "fsk4_cont":
+        period, start, pat = 864, 0, PATTERNS["P25 Phase 1 FS"][0]
+    else:
+        return sym
+    pos = abs_idx % period - start
+    m = (pos >= 0) & (pos < len(pat))
+    sym[m] = (pat[pos[m]].astype(np.int64) + 3) // 2  # ±1/±3 -> indice dans _FSK_LEVELS
+    return sym
 
 
 class SignalGenerator:
@@ -191,8 +213,11 @@ class SignalGenerator:
         elif em.kind == "fm_voice":
             inst = em.deviation_hz * 0.85 * self._voice(st, t)
         elif em.kind.startswith("fsk4"):
-            sym_idx = np.floor(t * em.symbol_rate).astype(np.int64) % len(st.symbols)
-            levels = _FSK_LEVELS[st.symbols[sym_idx]] * em.deviation_hz
+            abs_idx = np.floor((t - em.phase_s) * em.symbol_rate).astype(np.int64)
+            sym = st.symbols[abs_idx % len(st.symbols)].copy()
+            if em.embed_sync:
+                sym = _insert_sync(sym, abs_idx, em.kind, em.symbol_rate)
+            levels = _FSK_LEVELS[sym] * em.deviation_hz
             if st.zi is None:
                 st.zi = sps.lfilter_zi(st.h, 1.0) * levels[0]
             inst, st.zi = sps.lfilter(st.h, 1.0, levels, zi=st.zi)
@@ -270,8 +295,9 @@ def preset_scenarios() -> dict[str, Scenario]:
             -62.0,
             [
                 Emitter("fm_voice", ch[1], -40.0, label="FM permanente"),
-                Emitter("fsk4_tdma", ch[8], -42.0, deviation_hz=1_944.0, label="4FSK TDMA synthétique"),
-                Emitter("fsk4_cont", ch[13], -44.0, deviation_hz=1_800.0, label="4FSK continu synthétique"),
+                Emitter("fsk4_tdma", ch[8], -42.0, deviation_hz=1_944.0, embed_sync=True,
+                        label="4FSK TDMA synthétique avec motif de synchro DMR"),
+                Emitter("fsk4_cont", ch[13], -44.0, deviation_hz=1_800.0, label="4FSK continu synthétique sans motif de synchro"),
                 Emitter("carrier", ch[15], -50.0, label="Porteuse"),
             ],
         ),

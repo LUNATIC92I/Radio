@@ -94,6 +94,14 @@ def describe_observations(f: SignalFeatures, absolute_freq_hz: float | None) -> 
         obs.append(f"Raie de débit symbole à {f.symbol_rate_hz:.0f} Hz ({f.symbol_rate_strength_db:.1f} dB)")
     if f.fsk_levels:
         obs.append(f"Nombre de niveaux de fréquence observés : {f.fsk_levels}")
+    if f.sync_symbols:
+        from .sync import SyncResult
+
+        obs.append(SyncResult(f.sync_symbols, dict(f.sync_matches)).summary()
+                   + " (motifs publics de synchronisation ; aucun contenu décodé)")
+    if f.overlap_fraction is not None:
+        obs.append(f"Fenêtres de 20 ms à enveloppe perturbée : {f.overlap_fraction:.0%}"
+                   + (" — superposition probable" if f.overlap_suspected else ""))
     if f.ctcss_hz:
         obs.append(f"Tonalité subaudible CTCSS détectée : {f.ctcss_hz:.1f} Hz (marge {f.ctcss_margin_db:.0f} dB)")
     if f.tone_hz is not None and (f.tone_purity or 0) > 0.6:
@@ -197,6 +205,31 @@ def score_profile(p: ProtocolProfile, f: SignalFeatures, absolute_freq_hz: float
             crit(ok, 1.0, "Émission continue (accès FDMA)", "Émission en rafales (non attendue en FDMA)",
                  "structure temporelle")
 
+    cap = p.confidence_cap
+    if p.modulation == "4fsk" and f.sync_symbols > 0:
+        from .sync import SYNC_REFERENCES
+
+        own = f.sync_profile_hits.get(p.id, 0)
+        others = {k: v for k, v in f.sync_profile_hits.items() if k != p.id}
+        if p.id in SYNC_REFERENCES:
+            if own >= 2:
+                names = ", ".join(f"{k} ×{v}" for k, v in f.sync_matches.items())
+                h.supporting.append(f"Motif de synchronisation public trouvé ({names}) — {SYNC_REFERENCES[p.id]}")
+                got += 4.0
+                total += 4.0
+                cap = p.confidence_cap_verified or cap
+            elif others:
+                crit(False, 4.0, "", "Motif de synchronisation d'un autre système trouvé "
+                     f"({', '.join(others)})", "synchronisation", essential=True)
+            elif f.sync_symbols >= 1_000:
+                crit(False, 3.0, "", f"Aucun motif de synchronisation attendu sur {f.sync_symbols} symboles",
+                     "synchronisation")
+        elif any(v >= 2 for v in f.sync_profile_hits.values()):
+            h.notes.append("Un motif de synchronisation spécifique a été trouvé : une hypothèse plus précise "
+                           "est disponible.")
+    if f.overlap_suspected:
+        h.notes.append("Superposition d'émissions suspectée : confiance réduite.")
+
     if p.bands and absolute_freq_hz:
         inside = [b for b in p.bands if b.contains(absolute_freq_hz)]
         if inside:
@@ -223,7 +256,8 @@ def score_profile(p: ProtocolProfile, f: SignalFeatures, absolute_freq_hz: float
         raw *= 0.4
     elif h.contradicting and raw < 0.75:
         raw *= 0.5
-    h.confidence = float(np.clip(raw * coverage * snr_factor * dur_factor * p.confidence_cap, 0.0, 1.0))
+    overlap_factor = 0.7 if f.overlap_suspected else 1.0
+    h.confidence = float(np.clip(raw * coverage * snr_factor * dur_factor * overlap_factor * cap, 0.0, 1.0))
     return h
 
 
