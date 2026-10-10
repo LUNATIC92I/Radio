@@ -1,0 +1,26 @@
+{
+  "name": "Variations de puissance",
+  "description": "Émission permanente avec évanouissement lent de 20 dB et dérive de fréquence.",
+  "noise_dbfs": -60.0,
+  "emitters": [
+    {
+      "kind": "fm_tone",
+      "freq_hz": 446081250.0,
+      "power_dbfs": -35.0,
+      "deviation_hz": 2500.0,
+      "tone_hz": 1000.0,
+      "ctcss_hz": null,
+      "symbol_rate": 4800.0,
+      "bandwidth_hz": 10000.0,
+      "on_s": null,
+      "off_s": 0.0,
+      "phase_s": 0.0,
+      "fading_depth_db": 20.0,
+      "fading_rate_hz": 0.1,
+      "drift_hz_per_s": 15.0,
+      "label": "Émetteur à évanouissement",
+      "enabled": true
+    }
+  ],
+  "seed": 1234
+}

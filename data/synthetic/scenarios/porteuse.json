@@ -1,0 +1,26 @@
+{
+  "name": "Porteuse stable",
+  "description": "Une porteuse non modulée à -30 dBFS ; sert à vérifier l'étalonnage fréquence/puissance.",
+  "noise_dbfs": -65.0,
+  "emitters": [
+    {
+      "kind": "carrier",
+      "freq_hz": 446120000.0,
+      "power_dbfs": -30.0,
+      "deviation_hz": 2500.0,
+      "tone_hz": 1000.0,
+      "ctcss_hz": null,
+      "symbol_rate": 4800.0,
+      "bandwidth_hz": 10000.0,
+      "on_s": null,
+      "off_s": 0.0,
+      "phase_s": 0.0,
+      "fading_depth_db": 0.0,
+      "fading_rate_hz": 0.2,
+      "drift_hz_per_s": 0.0,
+      "label": "Porteuse de référence",
+      "enabled": true
+    }
+  ],
+  "seed": 1234
+}

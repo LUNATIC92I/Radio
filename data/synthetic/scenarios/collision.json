@@ -1,0 +1,44 @@
+{
+  "name": "Collision de transmissions",
+  "description": "Deux stations simulées émettent simultanément sur le même canal (chevauchement).",
+  "noise_dbfs": -60.0,
+  "emitters": [
+    {
+      "kind": "fm_voice",
+      "freq_hz": 446056250.0,
+      "power_dbfs": -40.0,
+      "deviation_hz": 2500.0,
+      "tone_hz": 1000.0,
+      "ctcss_hz": null,
+      "symbol_rate": 4800.0,
+      "bandwidth_hz": 10000.0,
+      "on_s": 3.0,
+      "off_s": 3.0,
+      "phase_s": 0.0,
+      "fading_depth_db": 0.0,
+      "fading_rate_hz": 0.2,
+      "drift_hz_per_s": 0.0,
+      "label": "Station 1 (simulée)",
+      "enabled": true
+    },
+    {
+      "kind": "fm_tone",
+      "freq_hz": 446056550.0,
+      "power_dbfs": -43.0,
+      "deviation_hz": 2500.0,
+      "tone_hz": 1750.0,
+      "ctcss_hz": null,
+      "symbol_rate": 4800.0,
+      "bandwidth_hz": 10000.0,
+      "on_s": 2.0,
+      "off_s": 4.0,
+      "phase_s": 1.5,
+      "fading_depth_db": 0.0,
+      "fading_rate_hz": 0.2,
+      "drift_hz_per_s": 0.0,
+      "label": "Station 2 (simulée, chevauchement)",
+      "enabled": true
+    }
+  ],
+  "seed": 1234
+}

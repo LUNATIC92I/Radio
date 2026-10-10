@@ -1,0 +1,14 @@
+# Dépendances Python (installées par scripts/install.*)
+numpy>=1.26
+scipy>=1.11
+PySide6>=6.6
+pyqtgraph>=0.13.3
+reportlab>=4.0
+# Tests
+pytest>=8.0
+pytest-qt>=4.3
+# Optionnel (non installable par pip, voir docs/GUIDE_SDR.md) :
+#   SoapySDR + modules matériels (python3-soapysdr, soapysdr-module-rtlsdr, …)
+#   GNU Radio >= 3.9 + gr-osmosdr
+#   FFmpeg (lecture MP3/FLAC/OGG/Opus/M4A)
+#   pyusb (détection USB hors Linux)

@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lunatic-radio-lab"
+version = "1.0.0"
+description = "Réception autorisée, analyse technique et surveillance radio (réception seule)"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Propriétaire — usage autorisé uniquement" }
+dependencies = ["numpy>=1.26", "scipy>=1.11", "PySide6>=6.6", "pyqtgraph>=0.13.3", "reportlab>=4.0"]
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "pytest-qt>=4.3"]
+usb = ["pyusb>=1.2"]
+
+[project.scripts]
+lunatic-radio-lab = "lunatic_radio_lab.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["lunatic_radio_lab*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyside6"

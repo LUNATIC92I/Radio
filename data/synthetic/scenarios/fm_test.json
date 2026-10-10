@@ -1,0 +1,26 @@
+{
+  "name": "FM de test",
+  "description": "Tonalité 1 kHz, excursion 2,5 kHz, CTCSS 88,5 Hz, sur le canal PMR446 n°3.",
+  "noise_dbfs": -60.0,
+  "emitters": [
+    {
+      "kind": "fm_tone",
+      "freq_hz": 446031250.0,
+      "power_dbfs": -35.0,
+      "deviation_hz": 2500.0,
+      "tone_hz": 1000.0,
+      "ctcss_hz": 88.5,
+      "symbol_rate": 4800.0,
+      "bandwidth_hz": 10000.0,
+      "on_s": null,
+      "off_s": 0.0,
+      "phase_s": 0.0,
+      "fading_depth_db": 0.0,
+      "fading_rate_hz": 0.2,
+      "drift_hz_per_s": 0.0,
+      "label": "FM test 1 kHz",
+      "enabled": true
+    }
+  ],
+  "seed": 1234
+}

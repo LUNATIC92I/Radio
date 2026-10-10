@@ -1,0 +1,26 @@
+{
+  "name": "Bruit élevé",
+  "description": "Émission faible (SNR réduit) dans un bruit élevé : évalue les seuils de détection.",
+  "noise_dbfs": -42.0,
+  "emitters": [
+    {
+      "kind": "fm_voice",
+      "freq_hz": 446093750.0,
+      "power_dbfs": -48.0,
+      "deviation_hz": 2500.0,
+      "tone_hz": 1000.0,
+      "ctcss_hz": null,
+      "symbol_rate": 4800.0,
+      "bandwidth_hz": 10000.0,
+      "on_s": 2.0,
+      "off_s": 2.0,
+      "phase_s": 0.0,
+      "fading_depth_db": 0.0,
+      "fading_rate_hz": 0.2,
+      "drift_hz_per_s": 0.0,
+      "label": "Station faible (simulée)",
+      "enabled": true
+    }
+  ],
+  "seed": 1234
+}

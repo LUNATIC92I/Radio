@@ -1,0 +1,4 @@
+Toutes les données de ce dossier sont SYNTHÉTIQUES (mode laboratoire de LUNATIC RADIO LAB).
+Elles ne proviennent d'aucune réception radio réelle. Les signaux 4FSK ne contiennent aucune trame
+de protocole réel : seules leurs propriétés physiques imitent les familles documentées.
+Les captures IQ sont au format SigMF (cf32_le) avec la métadonnée lrl:simulated = true.
