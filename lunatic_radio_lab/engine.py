@@ -20,6 +20,7 @@ import numpy as np
 
 from .dsp.activity import ActivityDetector, ActivityParams
 from .dsp.classifier import classify_iq
+from .dsp.demod import StreamingFMDemodulator
 from .dsp.spectrum import SpectrumAnalyzer
 from .drivers.base import Receiver, ReceiverError
 from .models import ActivityEvent, Detection, ReceiverConfig, SpectrumFrame
@@ -61,6 +62,13 @@ class AcquisitionEngine:
         self.on_events: Callable[[list[ActivityEvent]], None] | None = None
         self.on_error: Callable[[str], None] | None = None
         self.on_status: Callable[[str], None] | None = None
+        self.on_audio: Callable[[np.ndarray, bool], None] | None = None  # (audio 16 kHz, squelch ouvert)
+        self.monitor: StreamingFMDemodulator | None = None
+        self.monitor_freq_hz: float | None = None
+        self.monitor_bw_hz = 12_500.0
+        self._monitor_wav = None
+        self.monitor_record_path: str | None = None
+        self._monitor_lock = threading.Lock()
         self._ring: collections.deque[tuple[float, np.ndarray]] = collections.deque()
         self._ring_n = 0
         self._ring_lock = threading.Lock()
@@ -110,6 +118,16 @@ class AcquisitionEngine:
         closed = self.detector.flush()
         self._store_events(closed)
         applied = self.receiver.configure(cfg)
+        if self.monitor is not None:
+            f, bw = self.monitor_freq_hz, self.monitor_bw_hz
+            if abs(f - applied.center_freq_hz) + bw / 2 <= applied.sample_rate_hz / 2:
+                with self._monitor_lock:
+                    old = self.monitor
+                    self.monitor = StreamingFMDemodulator(applied.sample_rate_hz, f - applied.center_freq_hz, bw,
+                                                          16_000.0, old.deviation, old.squelch_db)
+            else:
+                self.stop_monitor()
+                self._status("Écoute arrêtée : le canal écouté est sorti de la bande observée.")
         self.analyzer.reset()
         self.max_hold = None
         with self._ring_lock:
@@ -160,6 +178,7 @@ class AcquisitionEngine:
 
     def stop(self) -> None:
         self._stop.set()
+        self.stop_monitor()
         if self._thread is not None:
             self._thread.join(timeout=5.0)
         self._thread = None
@@ -212,6 +231,7 @@ class AcquisitionEngine:
                 self._ring_n -= len(self._ring.popleft()[1])
         frame = self.analyzer.process(iq, cfg.center_freq_hz, cfg.sample_rate_hz, self.receiver.info.device_id,
                                       self.receiver.simulated, cfg.gain_db, ts)
+        self._feed_monitor(iq, frame)
         closed, dets = self.detector.update(frame)
         self.frames += 1
         self.last_frame = frame
@@ -226,6 +246,63 @@ class AcquisitionEngine:
             if self.on_events:
                 self.on_events(closed)
         return frame, dets, closed
+
+    # ---------------------------------------------------------------- écoute en direct
+    def start_monitor(self, freq_hz: float, bandwidth_hz: float = 12_500.0, squelch_db: float | None = 8.0,
+                      record_path: str | None = None, deviation_hz: float = 2_500.0) -> None:
+        """Démarre la démodulation FM continue d'un canal (l'autorisation est vérifiée par l'appelant)."""
+        cfg = self.receiver.config
+        offset = freq_hz - cfg.center_freq_hz
+        if abs(offset) + bandwidth_hz / 2 > cfg.sample_rate_hz / 2:
+            raise ValueError("Le canal demandé est hors de la bande observée.")
+        with self._monitor_lock:
+            self._close_wav()
+            self.monitor = StreamingFMDemodulator(cfg.sample_rate_hz, offset, bandwidth_hz, 16_000.0,
+                                                  deviation_hz, squelch_db)
+            self.monitor_freq_hz = freq_hz
+            self.monitor_bw_hz = bandwidth_hz
+            if record_path:
+                import wave
+
+                w = wave.open(record_path, "wb")
+                w.setnchannels(1)
+                w.setsampwidth(2)
+                w.setframerate(16_000)
+                self._monitor_wav = w
+                self.monitor_record_path = record_path
+        if self.db is not None:
+            self.db.audit("opérateur", "audio.monitor.start", {"freq_hz": freq_hz, "record": record_path,
+                                                               "simulated": self.receiver.simulated})
+
+    def stop_monitor(self) -> str | None:
+        with self._monitor_lock:
+            path = self.monitor_record_path if self._monitor_wav is not None else None
+            self._close_wav()
+            was = self.monitor is not None
+            self.monitor = None
+            self.monitor_freq_hz = None
+        if was and self.db is not None:
+            self.db.audit("opérateur", "audio.monitor.stop", {"record": path})
+        return path
+
+    def _close_wav(self) -> None:
+        if self._monitor_wav is not None:
+            try:
+                self._monitor_wav.close()
+            finally:
+                self._monitor_wav = None
+
+    def _feed_monitor(self, iq: np.ndarray, frame: SpectrumFrame) -> None:
+        with self._monitor_lock:
+            mon = self.monitor
+            if mon is None:
+                return
+            mon.set_noise_floor(frame.noise_floor_dbfs, frame.rbw_hz)
+            audio = mon.process(iq)
+            if self._monitor_wav is not None and len(audio):
+                self._monitor_wav.writeframes((np.clip(audio, -1, 1) * 32767).astype("<i2").tobytes())
+        if self.on_audio and len(audio):
+            self.on_audio(audio, mon.squelch_open)
 
     def _update_max_hold(self, frame: SpectrumFrame) -> None:
         mh = self.max_hold

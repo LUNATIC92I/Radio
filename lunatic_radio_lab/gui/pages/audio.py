@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import tempfile
+import time
 from pathlib import Path
 
 import numpy as np
 import pyqtgraph as pg
 from PySide6.QtCore import QUrl
 from PySide6.QtWidgets import (
-    QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QVBoxLayout, QWidget,
+    QCheckBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QLabel, QMessageBox, QProgressBar, QVBoxLayout,
+    QWidget,
 )
 
 from ... import paths
@@ -18,10 +20,10 @@ from ...dsp.demod import channelize, fm_demodulate
 from ...iq_io import read_sigmf
 from ...security.files import ImportRejected, secure_import, secure_import_sigmf
 from .. import theme
-from ..widgets import Page, button, error_box, fill_table, make_table, spin
+from ..widgets import Page, button, error_box, fill_table, make_table, mhz_spin, spin
 
 try:  # QtMultimedia peut être absent (bibliothèques système manquantes)
-    from PySide6.QtMultimedia import QAudioOutput, QMediaPlayer
+    from PySide6.QtMultimedia import QAudioFormat, QAudioOutput, QAudioSink, QMediaDevices, QMediaPlayer
 
     HAVE_MM = True
 except Exception:  # noqa: BLE001
@@ -107,11 +109,37 @@ class AudioPage(Page):
         f.addRow(r)
         f.addRow(button("↶ Annuler le dernier traitement", self.undo))
         sl.addWidget(g2, 3)
+        g3 = QGroupBox("Écoute en direct (canaux autorisés)")
+        f3 = QFormLayout(g3)
+        self.mon_freq = mhz_spin(446.00625e6)
+        self.mon_sq = spin(8, 0, 40, "dB", 0, 1)
+        self.mon_rec = QCheckBox("Enregistrer en WAV (canal avec enregistrement autorisé)")
+        self.mon_level = QProgressBar()
+        self.mon_level.setRange(0, 100)
+        self.mon_level.setFormat("niveau %p %")
+        self.mon_state = QLabel("Écoute arrêtée")
+        self.mon_state.setObjectName("hint")
+        self.mon_state.setWordWrap(True)
+        f3.addRow("Fréquence", self.mon_freq)
+        f3.addRow("", button("Prendre l'émission la plus forte", self._mon_pick))
+        f3.addRow("Squelch", self.mon_sq)
+        f3.addRow("", self.mon_rec)
+        r3 = QHBoxLayout()
+        self.mon_btn = button("▶ Écouter", self.toggle_monitor, "primary")
+        r3.addWidget(self.mon_btn)
+        f3.addRow(r3)
+        f3.addRow(self.mon_level)
+        f3.addRow(self.mon_state)
+        sl.addWidget(g3, 2)
         mid.addWidget(side, 1)
         self.root.addLayout(mid, 1)
         self.clip: A.AudioClip | None = None
         self.history: list[A.AudioClip] = []
         self._tmp = Path(tempfile.mkdtemp(prefix="lrl_audio_"))
+        self.sink = None
+        self.sink_dev = None
+        ctx.audio_chunk.connect(self._on_audio)
+        ctx.monitor_changed.connect(self._mon_changed)
         self.player = None
         if HAVE_MM:
             try:
@@ -212,6 +240,70 @@ class AudioPage(Page):
         self.ctx.db.audit(self.ctx.access.actor, "audio.demod", {"label": label, "simulated": simulated})
         self.history.clear()
         self.set_clip(A.AudioClip(audio, 16_000, label, simulated), label)
+
+    # ------------------------------------------------------------------ écoute en direct
+    def _mon_pick(self) -> None:
+        dets = self.ctx.last_detections
+        if dets:
+            self.mon_freq.setValue(max(dets, key=lambda d: d.channel_power_dbfs).center_freq_hz / 1e6)
+
+    def toggle_monitor(self) -> None:
+        if self.ctx.engine is not None and self.ctx.engine.monitor is not None:
+            path = self.ctx.stop_monitor()
+            if path:
+                self.ctx.notify.emit(f"Enregistrement écrit : {path}", "ok")
+            return
+        f = self.mon_freq.value() * 1e6
+        rec = None
+        if self.mon_rec.isChecked():
+            tag = "SIMULE_" if self.ctx.simulated else ""
+            rec = str(paths.captures_dir() / f"ecoute_{tag}{f / 1e6:.5f}MHz_{int(time.time())}.wav")
+        attested = self.ctx.simulated or self._attest()
+        if not attested:
+            return
+        try:
+            reason = self.ctx.start_monitor(f, 12_500.0, self.mon_sq.value(), rec, attested=True)
+        except (PermissionError, RuntimeError, ValueError) as exc:
+            error_box(self, "Écoute refusée", exc)
+            return
+        self._open_sink()
+        self.mon_state.setText(reason + ("" if self.sink_dev is not None else
+                                        " — aucune sortie audio disponible : niveau affiché uniquement."))
+
+    def _open_sink(self) -> None:
+        self.sink = self.sink_dev = None
+        if not HAVE_MM:
+            return
+        try:
+            dev = QMediaDevices.defaultAudioOutput()
+            if dev.isNull():
+                return
+            fmt = QAudioFormat()
+            fmt.setSampleRate(16_000)
+            fmt.setChannelCount(1)
+            fmt.setSampleFormat(QAudioFormat.Int16)
+            self.sink = QAudioSink(dev, fmt, self)
+            self.sink_dev = self.sink.start()
+        except Exception:  # noqa: BLE001
+            self.sink = self.sink_dev = None
+
+    def _on_audio(self, audio, squelch_open: bool) -> None:  # noqa: ANN001
+        rms = float(np.sqrt(np.mean(np.square(audio)))) if len(audio) else 0.0
+        self.mon_level.setValue(int(min(100, rms * 140)))
+        if self.sink_dev is not None:
+            try:
+                self.sink_dev.write((np.clip(audio, -1, 1) * 32767).astype("<i2").tobytes())
+            except Exception:  # noqa: BLE001
+                self.sink_dev = None
+
+    def _mon_changed(self, on: bool) -> None:
+        self.mon_btn.setText("■ Arrêter l'écoute" if on else "▶ Écouter")
+        if not on:
+            if self.sink is not None:
+                self.sink.stop()
+            self.sink = self.sink_dev = None
+            self.mon_level.setValue(0)
+            self.mon_state.setText("Écoute arrêtée")
 
     # ------------------------------------------------------------------ traitements
     def _apply(self, fn, name: str) -> None:  # noqa: ANN001

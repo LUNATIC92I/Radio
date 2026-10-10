@@ -1,6 +1,6 @@
 # Bilan des fonctionnalités et limitations
 
-État de la version 1.0.0. « Validé » signifie couvert par les tests automatisés (86 tests) ; les tests sur
+État de la version 1.0.0. « Validé » signifie couvert par les tests automatisés (93 tests) ; les tests sur
 matériel réel n'ont **pas** pu être réalisés dans l'environnement de développement (aucun récepteur connecté).
 
 ## Disponible et validé
@@ -15,7 +15,8 @@ matériel réel n'ont **pas** pu être réalisés dans l'environnement de dével
 | Caractérisation : CW, FM 1 kHz, FM vocale, 4FSK TDMA 4800 Bd, 4FSK continu 4800 Bd, 4FSK 2400 Bd ; rejet du bruit et des signaux faibles | tests |
 | Motifs de synchronisation publics DMR (BS/MS voix/données) et P25 Phase 1 : détection jusqu'à 2 symboles erronés, aucun faux positif sur 5000 symboles aléatoires | tests |
 | Indicateur de superposition d'émissions (collision partielle) | tests |
-| Démodulation FM analogique | tests |
+| Démodulation FM analogique, y compris en flux continu (sans discontinuité entre blocs) avec squelch référencé au plancher de bruit | tests |
+| Écoute/enregistrement en direct soumis aux règles d'autorisation des canaux | tests |
 | Audio : niveaux, passe-bande, réduction de bruit, normalisation, découpage, WAV, FFmpeg | tests |
 | Stockage SQLite, audit, contrôle d'accès PBKDF2, verrouillage | tests |
 | Import sécurisé (liens, extension, taille, signature, SHA-256) | tests |
@@ -53,7 +54,9 @@ matériel réel n'ont **pas** pu être réalisés dans l'environnement de dével
 - **Signaux FM vocaux** : la largeur mesurée par trame dépend du contenu instantané (médiane sur l'événement).
 - **Débit** : traitement en Python/NumPy, adapté à ≈ 3 MS/s sur un poste récent ; au-delà, augmenter la taille de
   bloc ou réduire l'échantillonnage.
-- **Écoute temps réel continue** : non proposée ; la démodulation porte sur le tampon des dernières secondes.
+- **Écoute en direct** : FM analogique uniquement, un canal à la fois ; restitution via QtMultimedia (non testée sur
+  une vraie sortie audio dans l'environnement de développement — le niveau et l'enregistrement WAV fonctionnent).
+  Le rééchantillonnage audio est linéaire (qualité « surveillance », pas « studio »).
 - **Classification automatique des événements** : effectuée seulement si l'événement est encore dans le tampon
   circulaire (4 s par défaut).
 - **Plage de fréquences** : celle du matériel ; le logiciel ne prétend pas recevoir au-delà.

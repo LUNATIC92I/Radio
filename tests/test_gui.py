@@ -63,3 +63,17 @@ def test_lab_scenario_apply(window):
     lab.load_preset()
     lab.apply()
     assert window.ctx.scenario.name == "Collision de transmissions"
+
+
+def test_live_monitor_in_simulation(window, qtbot):
+    ctx = window.ctx
+    got = []
+    ctx.audio_chunk.connect(lambda a, o: got.append(len(a)))
+    with pytest.raises(RuntimeError):
+        ctx.start_monitor(446.00625e6)  # acquisition non démarrée
+    assert ctx.start_acquisition()
+    qtbot.waitUntil(lambda: ctx.last_frame is not None, timeout=5000)
+    ctx.start_monitor(446.00625e6)
+    qtbot.waitUntil(lambda: len(got) > 3, timeout=5000)
+    ctx.stop_monitor()
+    assert ctx.engine.monitor is None

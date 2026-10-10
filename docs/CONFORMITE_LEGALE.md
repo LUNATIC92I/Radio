@@ -21,7 +21,7 @@
 |---|---|
 | Pas d'émission | Aucune fonction d'émission ; flux SoapySDR/GNU Radio en réception uniquement ; test automatisé qui interdit ces motifs dans le code |
 | Pas de déchiffrement | Aucun décodeur de voix numérique ni de trame ; caractérisation physique et repérage des motifs de synchronisation publics (séquences fixes sans information) seulement |
-| Enregistrement encadré | Démodulation/capture IQ réelles limitées aux canaux marqués « enregistrement autorisé » avec référence d'autorisation, attestation de l'opérateur et audit |
+| Écoute et enregistrement encadrés | Écoute en direct limitée aux canaux autorisés documentés ; enregistrement, démodulation de captures et capture IQ réelles limités aux canaux marqués « enregistrement autorisé » ; attestation de l'opérateur ; chaque démarrage, refus et arrêt journalisé |
 | Traçabilité | Journal d'audit horodaté (accès, configuration, imports, exports, captures, refus) |
 | Local par défaut | Aucun appel réseau ; récepteurs réseau désactivés par défaut (activation protégée) |
 | Pas de listes sensibles | Seul le plan PMR446 public est fourni ; l'administrateur saisit ses propres canaux autorisés |

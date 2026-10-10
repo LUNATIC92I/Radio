@@ -36,7 +36,7 @@ python -m lunatic_radio_lab report sortie.pdf --hours 24 --real-only
 | Waterfall | Historique configurable, niveaux auto/manuels, lecture de fréquence |
 | Activité | Seuil d'ouverture + hystérésis, persistance, durée minimale, temps de maintien, filtres de largeur, exclusion DC, filtre de canaux autorisés ; événements horodatés en base |
 | Identification | Largeur de bande, SNR, enveloppe, rafales/TDMA, dérive et stabilité de fréquence, excursion, débit symbole, niveaux 4FSK, CTCSS, tonalité d'essai, **motifs de synchronisation publics DMR/P25** (sans décodage), **superposition d'émissions** ; hypothèses avec confiance plafonnée et justification |
-| Audio | WAV (+ MP3/FLAC/OGG via FFmpeg), forme d'onde, spectrogramme, niveaux, passe-bande, réduction de bruit, normalisation, découpage, export WAV, démodulation FM (canaux autorisés uniquement) |
+| Audio | WAV (+ MP3/FLAC/OGG via FFmpeg), forme d'onde, spectrogramme, niveaux, passe-bande, réduction de bruit, normalisation, découpage, export WAV, démodulation FM et **écoute en direct avec squelch** (canaux autorisés uniquement, enregistrement WAV optionnel) |
 | Laboratoire | Porteuse, FM de test, voix synthétique, 4FSK TDMA/continu/6,25 kHz, intermittences, bruit, évanouissements, dérive, canaux occupés, collisions ; scénarios JSON |
 | Canaux | Gestion des canaux autorisés (admin), validation, avertissements réglementaires et capacités, import plan PMR446 public, import/export JSON/CSV |
 | Rapports | PDF (graphiques) + CSV : équipements, paramètres, plages, événements, puissances, tests, erreurs, limites ; réel et simulé séparés |
@@ -56,7 +56,7 @@ lunatic_radio_lab/
   engine.py     moteur d'acquisition (indépendant de l'interface)
   channels.py   canaux autorisés et validation
   gui/          interface PySide6 + PyQtGraph (14 écrans)
-tests/          86 tests pytest (dont interface graphique en mode offscreen)
+tests/          93 tests pytest (dont interface graphique en mode offscreen)
 data/synthetic/ captures SigMF, audio et scénarios synthétiques
 docs/           guides, conformité légale, bilan, exemple de rapport
 ```

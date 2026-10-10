@@ -49,6 +49,8 @@ class AppContext(QObject):
     history_changed = Signal()
     log_line = Signal(str, int)
     scenario_changed = Signal(object)
+    audio_chunk = Signal(object, bool)  # audio float32 16 kHz, squelch ouvert
+    monitor_changed = Signal(bool)
 
     def __init__(self, db: Database | None = None):
         super().__init__()
@@ -182,6 +184,7 @@ class AppContext(QObject):
         eng.on_events = self._on_events
         eng.on_error = self.error.emit
         eng.on_status = self.status.emit
+        eng.on_audio = self.audio_chunk.emit
         try:
             eng.start()
         except Exception as exc:  # noqa: BLE001
@@ -196,9 +199,34 @@ class AppContext(QObject):
         self.acquisition_changed.emit(True)
         return True
 
+    # ------------------------------------------------------------------ écoute en direct
+    def start_monitor(self, freq_hz: float, bandwidth_hz: float = 12_500.0, squelch_db: float | None = 8.0,
+                      record_path: str | None = None, attested: bool = False) -> str:
+        """Démarre l'écoute FM d'un canal ; lève PermissionError si la règle d'autorisation l'interdit."""
+        if self.engine is None or not self.running:
+            raise RuntimeError("Démarrez d'abord l'acquisition.")
+        ok, ch, reason = self.channels.monitor_authorization(freq_hz, bandwidth_hz, self.simulated,
+                                                             record_path is not None)
+        if not ok:
+            self.db.audit(self.access.actor, "audio.monitor.start",
+                          {"freq_hz": freq_hz, "result": "refusé", "reason": reason}, success=False)
+            raise PermissionError(reason)
+        if not self.simulated and not attested:
+            raise PermissionError("Attestation d'autorisation de l'opérateur requise.")
+        self.engine.start_monitor(freq_hz, bandwidth_hz, squelch_db, record_path)
+        self.monitor_changed.emit(True)
+        return reason
+
+    def stop_monitor(self) -> str | None:
+        path = self.engine.stop_monitor() if self.engine is not None else None
+        self.monitor_changed.emit(False)
+        return path
+
     def stop_acquisition(self) -> None:
         if self.engine is None:
             return
+        if self.engine.monitor is not None:
+            self.stop_monitor()
         self.engine.stop()
         self.db.audit(self.access.actor, "acquisition.stop", {"frames": self.engine.frames,
                                                               "events": self.engine.events_total})

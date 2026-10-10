@@ -49,6 +49,12 @@ La mention « superposition suspectée » signale une collision probable (deux �
 émission FM (direct : canal autorisé à l'enregistrement + attestation ; fichier SigMF réel : attestation).
 Forme d'onde (la zone cyan sert au découpage), spectrogramme, niveaux, traitements avec annulation, lecture, export.
 
+*Écoute en direct* : choisissez la fréquence (ou « Prendre l'émission la plus forte »), le squelch (dB au-dessus
+du bruit du canal) puis « Écouter ». Sur des données réelles, la fréquence doit être couverte par un canal autorisé
+portant une référence d'autorisation, et l'opérateur doit confirmer son autorisation ; l'option « Enregistrer en
+WAV » exige en plus « enregistrement autorisé » sur ce canal. Les fichiers sont écrits dans `captures/`. L'écoute
+s'arrête automatiquement si un changement de fréquence fait sortir le canal de la bande observée.
+
 **Historique** — filtres (dates, fréquences, puissance, durée, canal, nature), export CSV, purge (administrateur).
 
 **Canaux autorisés** — « Vérifier » affiche erreurs (⛔) et avertissements (⚠) : chevauchement, canalisation du

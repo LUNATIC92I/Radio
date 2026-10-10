@@ -183,6 +183,29 @@ class ChannelManager:
                 return c
         return None
 
+    def monitor_authorization(self, freq_hz: float, bandwidth_hz: float, simulated: bool,
+                              record: bool) -> tuple[bool, AuthorizedChannel | None, str]:
+        """Règle d'écoute/enregistrement en direct.
+
+        * données simulées : toujours permis (aucune communication réelle) ;
+        * données réelles : le canal écouté doit être entièrement couvert par un canal autorisé
+          portant une référence d'autorisation ; l'enregistrement exige en plus l'option
+          « enregistrement autorisé ».
+        """
+        if simulated:
+            return True, None, "Données simulées : aucune communication réelle."
+        lo, hi = freq_hz - bandwidth_hz / 2, freq_hz + bandwidth_hz / 2
+        cands = [c for c in self.list() if c.low_hz <= lo and hi <= c.high_hz]
+        if not cands:
+            return False, None, (f"{freq_hz / 1e6:.5f} MHz n'est couvert par aucun canal autorisé. "
+                                 "Un administrateur doit d'abord enregistrer ce canal.")
+        ch = next((c for c in cands if c.authorization_ref.strip()), None)
+        if ch is None:
+            return False, cands[0], f"Le canal « {cands[0].name} » n'a pas de référence d'autorisation."
+        if record and not ch.recording_allowed:
+            return False, ch, f"L'enregistrement n'est pas autorisé sur le canal « {ch.name} »."
+        return True, ch, f"Canal autorisé : {ch.name} ({ch.authorization_ref})"
+
     # --------------------------------------------------------------- import / export
     def export_json(self) -> str:
         return json.dumps([c.to_dict() for c in self.list()], indent=2, ensure_ascii=False)
